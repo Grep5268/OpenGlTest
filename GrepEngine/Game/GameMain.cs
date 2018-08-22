@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using GrepEngine.Engine.Viewport;
+using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System;
@@ -12,6 +13,7 @@ namespace GrepEngine.Game
         public const double FRAMES_PER_SECOND = 1.0 / 60.0;
 
         GameWindow gameWindow;
+        Camera cam = new Camera();
 
         double theta = 0; //delete
         int texture;
@@ -31,6 +33,7 @@ namespace GrepEngine.Game
             this.gameWindow.KeyPress += this.KeyPressed;
             this.gameWindow.KeyDown += this.KeyDown;
             this.gameWindow.KeyUp += this.KeyUp;
+            this.gameWindow.FocusedChanged += this.FocusChanged;
             this.gameWindow.Run(FRAMES_PER_SECOND);
         }
 
@@ -42,6 +45,8 @@ namespace GrepEngine.Game
             //lighting
             GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.Light0);
+
+            gameWindow.CursorVisible = false;
 
             //texturing
             GL.Enable(EnableCap.Texture2D);
@@ -60,7 +65,22 @@ namespace GrepEngine.Game
 
         void UpdateFrame(object sender, EventArgs e)
         {
-            GL.LoadIdentity(); //always reset to identity
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            var matrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * (45.0f / 180f), gameWindow.Width / gameWindow.Height, 1.0f, 512.0f); //field of view, aspect, start clip, end clip (view distance)
+            GL.LoadMatrix(ref matrix);
+
+            GL.MatrixMode(MatrixMode.Modelview); //return to modelview matrix for drawing
+            GL.LoadIdentity();
+            var viewMatrix = cam.GetViewMatrix();
+            GL.LoadMatrix(ref viewMatrix);
+
+            //camera
+            if (gameWindow.Focused)
+            {
+                cam.AddRotation(gameWindow);
+            }
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.Translate(0, 0, -150);
@@ -138,11 +158,7 @@ namespace GrepEngine.Game
         void Resize(object sender, EventArgs e)
         {
             GL.Viewport(0, 0, this.gameWindow.Width, this.gameWindow.Height);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            var matrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * (45.0f / 180f), gameWindow.Width / gameWindow.Height, 1.0f, 512.0f); //field of view, aspect, start clip, end clip (view distance)
-            GL.LoadMatrix(ref matrix);
-            GL.MatrixMode(MatrixMode.Modelview); //return to modelview matrix for drawing
+            
         }
 
         void KeyPressed(object sender, KeyPressEventArgs e)
@@ -158,17 +174,37 @@ namespace GrepEngine.Game
                     GL.Enable(EnableCap.Lighting);
                 }
             }
+
+            switch (e.KeyChar)
+            {
+                case 'w':
+                    cam.Move(0f, 0.1f, 0f);
+                    break;
+                case 'a':
+                    cam.Move(-0.1f, 0f, 0f);
+                    break;
+                case 's':
+                    cam.Move(0f, -0.1f, 0f);
+                    break;
+                case 'd':
+                    cam.Move(0.1f, 0f, 0f);
+                    break;
+            }
         }
 
         void KeyDown(object sender, KeyboardKeyEventArgs e)
         {
-            Console.WriteLine("down");
+          //  Console.WriteLine("down");
             //(if e.Key = Key.R == 'r')
         }
 
         void KeyUp(object sender, KeyboardKeyEventArgs e)
         {
-            Console.WriteLine("up");
+          //  Console.WriteLine("up");
+        }
+
+        void FocusChanged(object sender, EventArgs e)
+        {
         }
 
         BitmapData LoadImage(string filePath)
