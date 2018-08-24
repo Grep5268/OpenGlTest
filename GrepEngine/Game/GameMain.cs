@@ -1,8 +1,12 @@
-﻿using GrepEngine.Engine.Viewport;
+﻿using GrepEngine.Engine.Objects;
+using GrepEngine.Engine.Objects.Generation;
+using GrepEngine.Engine.Physics.MoveDirection;
+using GrepEngine.Engine.Viewport;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -14,6 +18,8 @@ namespace GrepEngine.Game
 
         GameWindow gameWindow;
         Camera cam = new Camera();
+
+        MapGenerator mapGenerator;
 
         double theta = 0; //delete
         int texture;
@@ -56,6 +62,10 @@ namespace GrepEngine.Game
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, texData.Width, texData.Height, 0, 
                 OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, texData.Scan0);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            //map
+            mapGenerator = new MapGenerator(@"../../Resources/Maps/test.xml");
+            mapGenerator.LoadMap();
         }
 
         void RenderFrame(object sender, EventArgs e)
@@ -79,78 +89,21 @@ namespace GrepEngine.Game
             if (gameWindow.Focused)
             {
                 cam.AddRotation(gameWindow);
+                cam.Move();
             }
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.Translate(0, 0, -150);
-            GL.Scale(2, 2, 2);
+            //GL.Translate(0, 0, -150);
+            // GL.Scale(2, 2, 2);
             //use push and pop matrix to keep a standard state
             //abstract out into transforms and render each
-            GL.Rotate(theta, 0, 1, 1);
-            theta = (theta + 2) % 360;
+            //GL.Rotate(theta, 0, 1, 1);
+            //theta = (theta + 2) % 360;
 
             GL.Begin(PrimitiveType.Quads);
 
-            GL.Normal3(-1.0, 0.0, 0.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(-10.0, 10.0, 10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(-10.0, 10.0, -10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(-10.0, -10.0, -10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(-10.0, -10.0, 10.0);
-
-            GL.Normal3(1.0, 0.0, 0.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(10.0, 10.0, 10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(10.0, 10.0, -10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(10.0, -10.0, -10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(10.0, -10.0, 10.0);
-
-            GL.Normal3(0.0, -1.0, 0.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(10.0, -10.0, 10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(10.0, -10.0, -10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(-10.0, -10.0, -10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(-10.0, -10.0, 10.0);
-
-            GL.Normal3(0.0, 1.0, 0.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(10.0, 10.0, 10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(10.0, 10.0, -10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(-10.0, 10.0, -10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(-10.0, 10.0, 10.0);
-
-            GL.Normal3(0.0, 0.0, -1.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(10.0, 10.0, -10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(10.0, -10.0, -10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(-10.0, -10.0, -10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(-10.0, 10.0, -10.0);
-
-            GL.Normal3(0.0, 0.0, 1.0);
-            GL.TexCoord2(1, 1);
-            GL.Vertex3(10.0, 10.0, 10.0);
-            GL.TexCoord2(0, 1);
-            GL.Vertex3(10.0, -10.0, 10.0);
-            GL.TexCoord2(0, 0);
-            GL.Vertex3(-10.0, -10.0, 10.0);
-            GL.TexCoord2(1, 0);
-            GL.Vertex3(-10.0, 10.0, 10.0);
+            mapGenerator.Render();
 
             GL.End();
         }
@@ -161,9 +114,8 @@ namespace GrepEngine.Game
             
         }
 
-        void KeyPressed(object sender, KeyPressEventArgs e)
-        {
-            Console.WriteLine(e.KeyChar);
+        void KeyPressed(object sender, OpenTK.KeyPressEventArgs e)
+        {  
             if (e.KeyChar == 'l')
             {
                 if(GL.IsEnabled(EnableCap.Lighting))
@@ -175,32 +127,51 @@ namespace GrepEngine.Game
                 }
             }
 
-            switch (e.KeyChar)
-            {
-                case 'w':
-                    cam.Move(0f, 0.1f, 0f);
-                    break;
-                case 'a':
-                    cam.Move(-0.1f, 0f, 0f);
-                    break;
-                case 's':
-                    cam.Move(0f, -0.1f, 0f);
-                    break;
-                case 'd':
-                    cam.Move(0.1f, 0f, 0f);
-                    break;
-            }
         }
 
         void KeyDown(object sender, KeyboardKeyEventArgs e)
         {
-          //  Console.WriteLine("down");
-            //(if e.Key = Key.R == 'r')
+            switch (e.Key)
+            {
+                case Key.W:
+                    cam.AddMovementCommand(new MoveDirection(Direction.FORWARD, 1));
+                    break;
+                case Key.A:
+                    cam.AddMovementCommand(new MoveDirection(Direction.LEFT, 1));
+                    break;
+                case Key.S:
+                    cam.AddMovementCommand(new MoveDirection(Direction.BACKWARDS, 1));
+                    break;
+                case Key.D:
+                    cam.AddMovementCommand(new MoveDirection(Direction.RIGHT, 1));
+                    break;
+            }
+
         }
 
         void KeyUp(object sender, KeyboardKeyEventArgs e)
         {
-          //  Console.WriteLine("up");
+            //  Console.WriteLine("up");
+            if (e.Key.Equals(Key.Escape))
+            {
+                Environment.Exit(0);
+            }
+
+            switch (e.Key)
+            {
+                case Key.W:
+                    cam.RemoveMovementCommand(Direction.FORWARD);
+                    break;
+                case Key.A:
+                    cam.RemoveMovementCommand(Direction.LEFT);
+                    break;
+                case Key.S:
+                    cam.RemoveMovementCommand(Direction.BACKWARDS);
+                    break;
+                case Key.D:
+                    cam.RemoveMovementCommand(Direction.RIGHT);
+                    break;
+            }
         }
 
         void FocusChanged(object sender, EventArgs e)

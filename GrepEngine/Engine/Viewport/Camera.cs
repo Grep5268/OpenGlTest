@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using GrepEngine.Engine.Physics.MoveDirection;
+using OpenTK;
 using OpenTK.Input;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,11 @@ namespace GrepEngine.Engine.Viewport
         public Vector3 Position = Vector3.Zero;
         public Vector3 PrevPos = Vector3.Zero;
         public Vector3 Orientation = new Vector3((float)Math.PI, 0f, 0f);
-        public float MoveSpeed = 0.2f;
+        public float MoveSpeed = 2f;
         public float MouseSensitivity = 0.001f;
         public Vector2 lastMousePos = new Vector2();
+
+        private Stack<MoveDirection> movementStack = new Stack<MoveDirection>();
 
         public Matrix4 GetViewMatrix()
         {
@@ -28,16 +31,56 @@ namespace GrepEngine.Engine.Viewport
             return Matrix4.LookAt(Position, Position + lookat, Vector3.UnitY);
         }
 
-        public void Move(float x, float y, float z)
+        /// <summary>
+        /// Initiates movement based upon cameras movement stack
+        /// </summary>
+        public void Move()
         {
             Vector3 offset = new Vector3();
 
             Vector3 forward = new Vector3((float)Math.Sin((float)Orientation.X), 0, (float)Math.Cos((float)Orientation.X));
             Vector3 right = new Vector3(-forward.Z, 0, forward.X);
 
-            offset += x * right;
-            offset += y * forward;
-            offset.Y += z;
+            float offsetX = 0;
+            float offsetY = 0;
+            float offsetZ = 0;
+
+            var clonedMovementStack = new Stack<MoveDirection>(movementStack);
+
+            while (clonedMovementStack.Count > 0)
+            {
+                var movement = clonedMovementStack.Pop();
+
+                if(movement.Direction == Direction.FORWARD)
+                {
+                    offset += movement.Magnitude * forward;
+                    break;
+                } else if(movement.Direction == Direction.BACKWARDS)
+                {
+                    offset -= movement.Magnitude * forward;
+                    break;
+                }
+            }
+
+            clonedMovementStack = new Stack<MoveDirection>(movementStack);
+
+            while (clonedMovementStack.Count > 0)
+            {
+                var movement = clonedMovementStack.Pop();
+
+                if (movement.Direction == Direction.RIGHT)
+                {
+                    offset += movement.Magnitude * right;
+                    break;
+                }
+                else if (movement.Direction == Direction.LEFT)
+                {
+                    offset -= movement.Magnitude * right;
+                    break;
+                }
+            }
+
+            //  offset.Y += z; used for up down movement
 
             offset.NormalizeFast();
             offset = Vector3.Multiply(offset, MoveSpeed);
@@ -67,6 +110,24 @@ namespace GrepEngine.Engine.Viewport
             Orientation.Y = Math.Max(Math.Min(Orientation.Y + y, (float)Math.PI / 2.0f - 0.1f), (float)-Math.PI / 2.0f + 0.1f);
 
             lastMousePos = new Vector2(OpenTK.Input.Mouse.GetState().X, OpenTK.Input.Mouse.GetState().Y);
+        }
+         
+        /// <summary>
+        /// inserts movement command to the movement stack
+        /// </summary>
+        /// <param name="moveDirection"></param>
+        public void AddMovementCommand(MoveDirection moveDirection)
+        {
+            movementStack.Push(moveDirection);
+        }
+
+        /// <summary>
+        /// inserts movement command to the movement stack
+        /// </summary>
+        /// <param name="moveDirection"></param>
+        public void RemoveMovementCommand(Direction direction)
+        {
+            movementStack = new Stack<MoveDirection>(movementStack.Where(x => x.Direction != direction));
         }
 
     }
