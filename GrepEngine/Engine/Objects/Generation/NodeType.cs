@@ -12,5 +12,6 @@ namespace GrepEngine.Engine.Objects.Generation
         public const string BODY = "body";
 
         public const string QUAD = "quad";
+        public const string BOX = "box";
     }
 }

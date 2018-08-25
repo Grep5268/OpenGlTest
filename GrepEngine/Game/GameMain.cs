@@ -94,15 +94,6 @@ namespace GrepEngine.Game
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            //GL.Translate(0, 0, -150);
-            // GL.Scale(2, 2, 2);
-            //use push and pop matrix to keep a standard state
-            //abstract out into transforms and render each
-            //GL.Rotate(theta, 0, 1, 1);
-            //theta = (theta + 2) % 360;
-
-            GL.Begin(PrimitiveType.Quads);
-
             mapGenerator.Render();
 
             GL.End();

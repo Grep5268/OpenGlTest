@@ -42,6 +42,9 @@ namespace GrepEngine.Engine.Objects.Generation
                     case NodeType.QUAD:
                         Transforms.Add(new Quad(child));
                         break;
+                    case NodeType.BOX:
+                        Transforms.Add(new Box(child));
+                        break;
                 }
             }
         }

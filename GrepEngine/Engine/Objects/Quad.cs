@@ -39,17 +39,10 @@ namespace GrepEngine.Engine.Objects
 
         public Quad(XElement element)
         {
-            Verticies.Add(AddVertFromXmlAttribute(element, FIRST_VERTEX_ID));
-            Verticies.Add(AddVertFromXmlAttribute(element, SECOND_VERTEX_ID));
-            Verticies.Add(AddVertFromXmlAttribute(element, THIRD_VERTEX_ID));
-            Verticies.Add(AddVertFromXmlAttribute(element, FOURTH_VERTEX_ID));
-        }
-
-        private Vector3 AddVertFromXmlAttribute(XElement element, string attr)
-        {
-            var v = element.Attribute(attr).Value;
-            var vert = v.Split(',').Select(float.Parse).ToArray();
-            return new Vector3(vert[0], vert[1], vert[2]);
+            Verticies.Add(GetVertFromXmlAttribute(element, FIRST_VERTEX_ID));
+            Verticies.Add(GetVertFromXmlAttribute(element, SECOND_VERTEX_ID));
+            Verticies.Add(GetVertFromXmlAttribute(element, THIRD_VERTEX_ID));
+            Verticies.Add(GetVertFromXmlAttribute(element, FOURTH_VERTEX_ID));
         }
     }
 }

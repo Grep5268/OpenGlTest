@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Engine\Objects\Generation\NodeType.cs" />
     <Compile Include="Engine\Objects\Generation\MapGenerator.cs" />
+    <Compile Include="Engine\Objects\Box.cs" />
     <Compile Include="Engine\Objects\Quad.cs" />
     <Compile Include="Engine\Objects\Transform.cs" />
     <Compile Include="Engine\Physics\MoveDirection\MoveDirection.cs" />
