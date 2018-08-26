@@ -50,6 +50,12 @@ namespace GrepEngine.Game
 
             //lighting
             GL.Enable(EnableCap.Lighting);
+            GL.LightModel(LightModelParameter.LightModelTwoSide, 1);
+            GL.Light(LightName.Light0, LightParameter.Ambient, new[] { 1f, 1f, 1f, 1f });
+            GL.Light(LightName.Light0, LightParameter.Diffuse, new[] { 1f, 1f, 1f, 1f });
+            GL.Light(LightName.Light0, LightParameter.Specular, new[] { 1f, 1f, 1f, 1f });
+            GL.Light(LightName.Light0, LightParameter.ConstantAttenuation, new[] { 2f });
+
             GL.Enable(EnableCap.Light0);
 
             gameWindow.CursorVisible = false;
@@ -77,13 +83,24 @@ namespace GrepEngine.Game
         {
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
+
+            //light
+            float[] lightPos = { 55.0f, 14.0f, 0.0f, 1.0f };
+            GL.Light(LightName.Light0, LightParameter.Position, lightPos);
+
             var matrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * (45.0f / 180f), gameWindow.Width / gameWindow.Height, 1.0f, 512.0f); //field of view, aspect, start clip, end clip (view distance)
             GL.LoadMatrix(ref matrix);
 
             GL.MatrixMode(MatrixMode.Modelview); //return to modelview matrix for drawing
             GL.LoadIdentity();
+
+            
             var viewMatrix = cam.GetViewMatrix();
-            GL.LoadMatrix(ref viewMatrix);
+            GL.LoadMatrix(ref viewMatrix);         
+
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            mapGenerator.Render();
 
             //camera
             if (gameWindow.Focused)
@@ -91,10 +108,6 @@ namespace GrepEngine.Game
                 cam.AddRotation(gameWindow);
                 cam.Move();
             }
-
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            mapGenerator.Render();
 
             GL.End();
         }
